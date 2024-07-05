@@ -37,6 +37,15 @@ resource "aws_instance" "example" {
   security_groups = [aws_security_group.example_sg.name]
   key_name        = "projects"  # Reference the existing key pair name here
 
+  user_data = <<-EOF
+              #!/bin/bash
+              sudo yum update -y
+              sudo yum install -y httpd
+              sudo systemctl start httpd
+              sudo systemctl enable httpd
+              echo "<html><body><h1>Sample Web App</h1></body></html>" > /var/www/html/index.html
+              EOF
+
   tags = {
     Name = "ExampleInstance"
   }
