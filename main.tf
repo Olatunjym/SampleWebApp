@@ -25,9 +25,10 @@ resource "aws_security_group" "example_sg" {
 }
 
 resource "aws_instance" "example" {
-  ami           = "ami-0ff591da048329e00"
-  instance_type = "t2.micro"
+  ami             = "ami-0ff591da048329e00"
+  instance_type   = "t2.micro"
   security_groups = [aws_security_group.example_sg.name]
+  key_name        = "projects"  # Reference the existing key pair name here
 
   tags = {
     Name = "ExampleInstance"
