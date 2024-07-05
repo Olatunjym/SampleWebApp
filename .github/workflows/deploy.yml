@@ -1,4 +1,4 @@
-name: Deploy SampleWebApp
+name: Deploy
 
 on:
   push:
@@ -13,23 +13,22 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-west-1
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v1
-      with:
-        terraform_version: 1.0.11
+    - name: Copy files to EC2
+      run: |
+        scp -o StrictHostKeyChecking=no -i /home/runner/.ssh/projects.pem -r SampleWebApp ec2-user@${{ secrets.EC2_PUBLIC_IP }}:/home/ec2-user/
 
-    - name: Terraform Init
-      run: terraform init
-
-    - name: Terraform Plan
-      run: terraform plan
-
-    - name: Terraform Apply
-      run: terraform apply -auto-approve
+    - name: Install and run application on EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no -i /home/runner/.ssh/projects.pem ec2-user@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+          sudo yum update -y
+          sudo yum install -y httpd
+          sudo systemctl start httpd
+          sudo systemctl enable httpd
+          sudo cp -r /home/ec2-user/SampleWebApp/* /var/www/html/
+          sudo systemctl restart httpd
+        EOF
